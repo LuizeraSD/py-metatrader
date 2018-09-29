@@ -86,8 +86,11 @@ class BacktestReport(BaseReport):
         from bs4 import BeautifulSoup
         import re
         super(BacktestReport, self).__init__(backtest)
+        
 
         report_file = get_report_abs_path(backtest.ea_name, alias=alias)
+        self.report_file = report_file
+
         with open(report_file, 'r') as fp:
             raw_html = fp.read()
             
@@ -178,9 +181,8 @@ class BacktestReport(BaseReport):
         from exception import InvalidReportFormat
         formatted_str = re.sub('(\(|\))', '', line)
         values = formatted_str.split(r' ')
-
         if len(values) != 2:
-            raise InvalidReportFormat('value of Maximal drawdown contains more than 2 values')
+            raise InvalidReportFormat(self.report_file, 'value of Maximal drawdown contains more than 2 values')
         
         for value in values:
             if re.match('.*\%$',value):
@@ -204,7 +206,7 @@ class BacktestReport(BaseReport):
         values = formatted_str.split(r' ')
 
         if len(values) != 2:
-            raise InvalidReportFormat('value of Maximal drawdown contains more than 2 values')
+            raise InvalidReportFormat(self.report_file,'value of Maximal drawdown contains more than 2 values')
         
         return values
 

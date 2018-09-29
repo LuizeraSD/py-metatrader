@@ -2,7 +2,7 @@ from datetime import datetime
 from metatrader.mt4 import initizalize
 from metatrader.backtest import BackTest
 
-DEPOSIT = 10000
+DEPOSIT = 542
 METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4'
 EA_NAME = 'Spartan Bolt V6\\Spartan Bolt V6.ex4'
 
@@ -14,8 +14,8 @@ to_date = datetime(2018, 2, 1)
 
 # create ea param by dict.
 param = {
-         'Lots': {'value': 0.05},
-         'MovingPeriod': {'value': 21}
+         'PipStep': {'value': 20},
+         'LotMultiplier': {'value': 1.8}
          }
 
 initizalize(METATRADER_DIR)

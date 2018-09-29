@@ -40,11 +40,12 @@ class BackTest(object):
         self.test_visual = test_visual
         self.deposit = deposit
 
+        ea_name = ea_name.replace(".ex4","")
         path, ea = os.path.split(ea_name)
         if ea == "":
             ea = path
         
-        self.ea_name = ea.replace(".ex4","")
+        self.ea_name = ea
         self.ea_fullname = ea_name
 
     def _prepare(self, alias=DEFAULT_MT4_NAME):
@@ -53,6 +54,8 @@ class BackTest(object):
           create backtest config file and parameter file
         """
 
+        self._create_tickdata_conf(alias=alias)
+        self._create_ini(alias=alias)
         self._create_conf(alias=alias)
         self._create_param(alias=alias)
 
@@ -95,7 +98,6 @@ class BackTest(object):
             fp.write('TestExpertParameters=%s.set\n' % self.ea_name)
             fp.write('TestSymbol=%s\n' % self.symbol)
             fp.write('TestModel=%s\n' % self.model)
-            fp.write('Deposit=%s\n' % self.deposit)
             fp.write('TestSpread=%s\n' % self.spread)
             fp.write('TestOptimization=%s\n' % str(self.optimization).lower())
             fp.write('TestDateEnable=true\n')
@@ -115,12 +117,6 @@ class BackTest(object):
         """
         mt4 = get_mt4(alias=alias)
         param_file = os.path.join(mt4.appdata_path, 'tester', '%s.set' % self.ea_name)
-
-        #Delete ea.ini file to force other EA params to Default
-        ini_file = os.path.join(mt4.appdata_path, 'tester', '%s.ini' % self.ea_name)
-        if os.path.exists(ini_file):
-            os.remove(ini_file)
-        
 
         with open(param_file, 'w') as fp:
             for k in self.param:
@@ -152,6 +148,81 @@ class BackTest(object):
                         fp.write('%s,2=0\n' % k)
                         fp.write('%s,3=0\n' % k)
 
+    def _create_ini(self, alias=DEFAULT_MT4_NAME):
+        """
+        Notes:
+          create config file(.ini) which is used for the config EA
+          in %APPDATA%\\MetaQuotes\\Terminal\\<UUID>\\tester          
+        """
+        
+        mt4 = get_mt4(alias=alias)
+        ini_file = os.path.join(mt4.appdata_path, 'tester', '%s.ini' % self.ea_name)
+
+        with open(ini_file, 'w') as fp:
+            fp.write('<common>\n')
+            fp.write('positions=2\n')
+            fp.write('deposit=%s\n' % self.deposit)
+            fp.write('currency=USD\n')
+            fp.write('fitnes=0\n')
+            fp.write('genetic=1\n')
+            fp.write('</common>\n')        
+        
+    def _create_tickdata_conf(self, alias=DEFAULT_MT4_NAME):
+        """
+        Notes:
+            create tds.config which is used for the backtest
+            in %APPDATA%\\MetaQuotes\\Terminal\\<UUID>\\config
+        """
+
+        mt4 = get_mt4(alias=alias)
+        conf_file = os.path.join(mt4.appdata_path, 'config', 'tds.config')        
+
+        with open(conf_file, 'w') as fp:            
+            fp.write('<?xml version="1.0" encoding="utf-8"?>\n')
+            fp.write('<configuration>\n')
+            fp.write('  <configSections>\n')
+            fp.write('      <section name="global" type="System.Configuration.AppSettingsSection, System.Configuration, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />\n')
+            fp.write('  </configSections>\n')
+            fp.write('  <global>\n')
+            fp.write('      <add key="UseTickDataEnabled" value="True" />\n')
+            fp.write('      <add key="Source" value="Dukascopy" />\n')
+            fp.write('      <add key="GMTOffset" value="2" />\n')
+            fp.write('      <add key="DST" value="1" />\n')
+            fp.write('      <add key="UseVariableSpread" value="True" />\n')
+            fp.write('      <add key="SlippageEnabled" value="False" />\n')
+            fp.write('      <add key="ReproducibleSlippage" value="True" /><add key="OptimizationSlippage" value="True" /><add key="LimitOrderSlippage" value="True" />\n')
+            fp.write('      <add key="StopOrderSlippage" value="True" /><add key="SlOrderSlippage" value="True" /><add key="TpOrderSlippage" value="True" />\n')
+            fp.write('      <add key="LatencyBasedSlippage" value="False" /><add key="MinimumSlippageDelay" value="200" /><add key="MaximumSlippageDelay" value="300" />\n')
+            fp.write('      <add key="MinimumPendingSlippageDelay" value="100" /><add key="MaximumPendingSlippageDelay" value="150" /><add key="DealerStyleSlippage" value="True" />\n')
+            fp.write('      <add key="MaxFavorableSlippage" value="10" /><add key="MaxUnfavorableSlippage" value="10" /><add key="UseCustomSlippageChance" value="False" />\n')
+            fp.write('      <add key="CustomSlippageChance" value="100" /><add key="UseCustomFavorableChance" value="False" /><add key="FavorableSlippageChance" value="50" />\n')
+            fp.write('      <add key="StandardDeviationSlippage" value="False" /><add key="SlippageMean" value="0" /><add key="SlippageStDev" value="30" />\n')
+            fp.write('      <add key="OverrideMinLot" value="False" />\n')
+            fp.write('      <add key="MinLot" value="0.01" />\n')
+            fp.write('      <add key="OverrideMaxLot" value="False" />\n')
+            fp.write('      <add key="MaxLot" value="1000" />\n')
+            fp.write('      <add key="OverrideLotStep" value="False" />\n')
+            fp.write('      <add key="LotStep" value="0.1" />\n')
+            fp.write('      <add key="OverrideLeverage" value="False" />\n')
+            fp.write('      <add key="Leverage" value="500" />\n')
+            fp.write('      <add key="OverrideBaseCommission" value="False" />\n')
+            fp.write('      <add key="BaseCommission" value="0" />\n')
+            fp.write('      <add key="OverrideCommissionType" value="False" />\n')
+            fp.write('      <add key="CommissionType" value="1" />\n')
+            fp.write('      <add key="OverrideCommissionPer" value="False" />\n')
+            fp.write('      <add key="CommissionPer" value="0" />\n')
+            fp.write('      <add key="BarsToPrefix" value="100" />\n')
+            fp.write('      <add key="LiveExecutionStoploss" value="True" />\n')
+            fp.write('      <add key="LiveExecutionTakeprofit" value="True" />\n')
+            fp.write('      <add key="LiveExecutionStop" value="True" />\n')
+            fp.write('      <add key="LiveExecutionLimit" value="True" />\n')
+            fp.write('      <add key="UseFxtDuringOptimization" value="True" /><add key="SaveFxtWhenBacktesting" value="False" />\n')
+            fp.write('      <add key="SaveHstFilesWhenSavingFxt" value="False" /><add key="SaveHstFilesWhenBacktesting" value="False" />\n')
+            fp.write('      <add key="ReadOnlyFxtEncountered" value="3" /><add key="DeleteFxtAfterOptimization" value="True" />\n')
+            fp.write('      <add key="AdjustSlTpAfterSlippage" value="False" /><add key="EnforceSlippage" value="False" />\n')
+            fp.write('      <add key="SymbolSlippage" value="False" />\n')
+            fp.write('  </global>\n')
+            fp.write('</configuration>')
 
     def _get_conf_abs_path(self, alias=DEFAULT_MT4_NAME):
         mt4 = get_mt4(alias=alias)

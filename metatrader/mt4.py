@@ -39,7 +39,13 @@ class MT4(object):
         if not has_mt4_subdirs(self.appdata_path):
             err_msg = 'appdata path %s has not sufficient dirs' % self.appdata_path
             logging.error(err_msg)
-            raise IOError(err_msg)
+            raise IOError(err_msg)    
+
+        if not has_tickdata_install():
+                err_msg = 'Tick Data Not Found / Not Installed'
+                logging.error(err_msg)
+                #raise IOError(err_msg)                
+
 
     def run(self, ea_name, conf=None):
         """
@@ -101,14 +107,38 @@ def is_uac_enabled():
     """
     import _winreg    
     
-    reg_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System', 0, _winreg.KEY_READ)
-    value, regtype = _winreg.QueryValueEx(reg_key, 'EnableLUA')
+    try:
+        reg_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System', 0, _winreg.KEY_READ)
+        value, regtype = _winreg.QueryValueEx(reg_key, 'EnableLUA')
+    except:
+        return True
     
     if value == 1:
         #reg value 1 means UAC is enabled
         return True
     else:
         return False    
+
+def has_tickdata_install():
+    """
+    Note:
+      check if TickData is installed
+    Returns:
+      True if TickData is installed
+    """
+    import _winreg    
+    
+    try:
+        reg_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 'SOFTWARE\\eareview.net\\Tick Data Suite', 0, _winreg.KEY_READ)
+        value, regtype = _winreg.QueryValueEx(reg_key, 'LatestVersion')
+    except:
+        return False
+
+    if value:
+        return True
+    else:
+        return False
+
 
 def get_appdata_path(program_file_dir):
     """
