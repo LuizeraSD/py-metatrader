@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-@author: samuraitaiga
+@OriginAuthor: samuraitaiga
+@ModifiedBy: LuizeraSD
 """
 import os
 import logging
@@ -54,10 +55,10 @@ class MT4(object):
             prog = '"%s"' % os.path.join(self.prog_path, MT4_EXE)
             conf = '"%s"' % conf
             cmd = '%s %s' % (prog, conf)
-            p = subprocess.Popen(cmd)
+            p = subprocess.Popen(cmd)            
             p.wait()
             if p.returncode == 0:
-                logging.info('cmd[%s] successded', cmd)
+                logging.info('cmd[%s]', cmd)
             else:
                 err_msg = 'run mt4 with cmd[%s] failed!!' % cmd
                 logging.error(err_msg)
@@ -107,7 +108,7 @@ def is_uac_enabled():
         #reg value 1 means UAC is enabled
         return True
     else:
-        return False
+        return False    
 
 def get_appdata_path(program_file_dir):
     """

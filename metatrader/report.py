@@ -1,7 +1,9 @@
 '''
 Created on 2015/01/31
 
-@author: Taiga
+@OriginAuthor: samuraitaiga
+@ModifiedBy: LuizeraSD
+
 '''
 
 from mt4 import get_mt4
@@ -89,7 +91,7 @@ class BacktestReport(BaseReport):
         with open(report_file, 'r') as fp:
             raw_html = fp.read()
             
-        b_soup = BeautifulSoup(raw_html)
+        b_soup = BeautifulSoup(raw_html,features="html.parser")
         summary_in_table = b_soup.find_all('table')[0]
         tds = summary_in_table.find_all('td')
         
@@ -98,7 +100,7 @@ class BacktestReport(BaseReport):
                 self.initial_deposit = float(tds[index+1].text)
             if td.text == 'Modelling quality':
                 modeling_quality_percentage_str = re.sub('%', '', tds[index+1].text)
-                self.modeling_quality_percentage = float(modeling_quality_percentage_str)
+                self.modeling_quality_percentage = modeling_quality_percentage_str
             elif td.text == 'Total net profit':
                 self.profit = float(tds[index+1].text)
             elif td.text == 'Gross profit':

@@ -2,7 +2,9 @@
 '''
 Created on 2015/01/25
 
-@author: samuraitaiga
+@OriginAuthor: samuraitaiga
+@ModifiedBy: LuizeraSD
+
 '''
 import logging
 import os
@@ -27,22 +29,30 @@ class BackTest(object):
       replace_report(bool): replace report flag. replace report is enabled if True
 
     """
-    def __init__(self, ea_name, param, symbol, period, from_date, to_date, model=0, spread=5, replace_repot=True):
-        self.ea_name = ea_name
+    def __init__(self, ea_name, param, symbol, period, from_date, to_date, deposit=1000, model=0, spread=5, replace_repot=True,test_visual=False):
         self.param = param
         self.symbol = symbol
-        self.period = period
         self.from_date = from_date
         self.to_date = to_date
         self.model = model
         self.spread = spread
         self.replace_report = replace_repot
+        self.test_visual = test_visual
+        self.deposit = deposit
+
+        path, ea = os.path.split(ea_name)
+        if ea == "":
+            ea = path
+        
+        self.ea_name = ea.replace(".ex4","")
+        self.ea_fullname = ea_name
 
     def _prepare(self, alias=DEFAULT_MT4_NAME):
         """
         Notes:
           create backtest config file and parameter file
         """
+
         self._create_conf(alias=alias)
         self._create_param(alias=alias)
 
@@ -66,21 +76,26 @@ class BackTest(object):
             TestReport=SampleEA
             TestReplaceReport=false
             TestShutdownTerminal=true
+			TestVisualEnable=false
         """
+
 
         mt4 = get_mt4(alias=alias)
         conf_file = os.path.join(mt4.appdata_path, 'tester', '%s.conf' % self.ea_name)
+        report_dir = os.path.join(mt4.appdata_path, 'report')
+        if not os.path.exists(report_dir):
+            os.makedirs(report_dir)
 
         # shutdown_terminal must be True.
         # If false, popen don't end and backtest report analyze don't start.
         shutdown_terminal = True
 
         with open(conf_file, 'w') as fp:
-            fp.write('TestExpert=%s\n' % self.ea_name)
+            fp.write('TestExpert=%s\n' % self.ea_fullname)
             fp.write('TestExpertParameters=%s.set\n' % self.ea_name)
             fp.write('TestSymbol=%s\n' % self.symbol)
             fp.write('TestModel=%s\n' % self.model)
-            fp.write('TestPeriod=%s\n' % self.period)
+            fp.write('Deposit=%s\n' % self.deposit)
             fp.write('TestSpread=%s\n' % self.spread)
             fp.write('TestOptimization=%s\n' % str(self.optimization).lower())
             fp.write('TestDateEnable=true\n')
@@ -88,6 +103,7 @@ class BackTest(object):
             fp.write('TestToDate=%s\n' % self.to_date.strftime('%Y.%m.%d'))
             fp.write('TestReport=%s\n' % self.ea_name)
             fp.write('TestReplaceReport=%s\n' % str(self.replace_report).lower())
+            fp.write('TestVisualEnable=%s\n' % str(self.test_visual).lower())
             fp.write('TestShutdownTerminal=%s\n' % str(shutdown_terminal).lower())
 
     def _create_param(self, alias=DEFAULT_MT4_NAME):
@@ -99,6 +115,12 @@ class BackTest(object):
         """
         mt4 = get_mt4(alias=alias)
         param_file = os.path.join(mt4.appdata_path, 'tester', '%s.set' % self.ea_name)
+
+        #Delete ea.ini file to force other EA params to Default
+        ini_file = os.path.join(mt4.appdata_path, 'tester', '%s.ini' % self.ea_name)
+        if os.path.exists(ini_file):
+            os.remove(ini_file)
+        
 
         with open(param_file, 'w') as fp:
             for k in self.param:
@@ -135,6 +157,7 @@ class BackTest(object):
         mt4 = get_mt4(alias=alias)
         conf_file = os.path.join(mt4.appdata_path, 'tester', '%s.conf' % self.ea_name)
         return conf_file
+
 
     def run(self, alias=DEFAULT_MT4_NAME):
         """

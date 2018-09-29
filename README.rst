@@ -2,10 +2,6 @@
 py-metatrader
 ****************************************
 
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-   :alt: Join the chat at hhttps://gitter.im/samuraitaiga/py-metatrader
-   :target: https://gitter.im/samuraitaiga/py-metatrader
-
 py-metatrader 0.0.1
 
 Released: 30-May-2015
@@ -94,9 +90,6 @@ Backtest:
              }
     # create backtest object
     backtest = BackTest(ea_name, param, 'USDJPY', 'M5', from_date, to_date)
-
-    # create backtest object with specified spread
-    # backtest = BackTest(ea_name, param, 'USDJPY', 'M5', from_date, to_date, spread=10)
 
     # run backtest
     ret = backtest.run()
