@@ -2,15 +2,13 @@ from datetime import datetime
 from metatrader.mt4 import initizalize
 from metatrader.backtest import BackTest
 
-DEPOSIT = 542
+SYMBOL = 'EURUSD'
+PERIOD = 'H1'
+DEPOSIT = 1000
 METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4'
 EA_NAME = 'Spartan Bolt V6\\Spartan Bolt V6.ex4'
-
-
-from_date = datetime(2018, 1, 1)
-to_date = datetime(2018, 2, 1)
-
-
+INI_DATE = datetime(2018, 1, 1)
+END_DATE = datetime(2018, 2, 1)
 
 # create ea param by dict.
 param = {
@@ -19,8 +17,8 @@ param = {
          }
 
 initizalize(METATRADER_DIR)
-# create backtest object
-backtest = BackTest(EA_NAME, param, 'EURUSD', 'H1', from_date, to_date, DEPOSIT)
+
+backtest = BackTest(EA_NAME, param, SYMBOL, PERIOD, INI_DATE, END_DATE, DEPOSIT)
 
 # run backtest
 ret = backtest.run()
