@@ -8,6 +8,8 @@ Created on 2015/01/25
 '''
 import logging
 import os
+import hashlib
+
 from mt4 import get_mt4
 from mt4 import DEFAULT_MT4_NAME
 from __builtin__ import str
@@ -39,6 +41,7 @@ class BackTest(object):
         self.replace_report = replace_repot
         self.test_visual = test_visual
         self.deposit = deposit
+        self.ea_md5 = ""
 
         ea_name = ea_name.replace(".ex4","")
         path, ea = os.path.split(ea_name)
@@ -47,13 +50,18 @@ class BackTest(object):
         
         self.ea_name = ea
         self.ea_fullname = ea_name
+        
+        mt4 = get_mt4(alias=DEFAULT_MT4_NAME)
+        ea_file = os.path.join(mt4.appdata_path, 'MQL4', 'Experts', self.ea_fullname+'.ex4')
+        self.ea_md5 = md5(ea_file)
+
 
     def _prepare(self, alias=DEFAULT_MT4_NAME):
         """
         Notes:
           create backtest config file and parameter file
         """
-
+        
         self._create_tickdata_conf(alias=alias)
         self._create_ini(alias=alias)
         self._create_conf(alias=alias)
@@ -165,8 +173,8 @@ class BackTest(object):
             fp.write('currency=USD\n')
             fp.write('fitnes=0\n')
             fp.write('genetic=1\n')
-            fp.write('</common>\n')        
-        
+            fp.write('</common>\n') 
+
     def _create_tickdata_conf(self, alias=DEFAULT_MT4_NAME):
         """
         Notes:
@@ -266,3 +274,10 @@ class BackTest(object):
 
 def load_from_file(dsl_file):
     pass
+
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()

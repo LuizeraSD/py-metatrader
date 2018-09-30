@@ -102,7 +102,7 @@ class BacktestReport(BaseReport):
             if td.text == 'Initial deposit':
                 self.initial_deposit = float(tds[index+1].text)
             if td.text == 'Modelling quality':
-                modeling_quality_percentage_str = re.sub('%', '', tds[index+1].text)
+                modeling_quality_percentage_str = float(re.sub('%', '', tds[index+1].text))
                 self.modeling_quality_percentage = modeling_quality_percentage_str
             elif td.text == 'Total net profit':
                 self.profit = float(tds[index+1].text)

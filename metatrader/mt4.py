@@ -5,6 +5,7 @@
 """
 import os
 import logging
+import hashlib
 
 _mt4s = {}
 
@@ -208,3 +209,4 @@ def get_mt4(alias=DEFAULT_MT4_NAME):
         return _mt4s[alias]
     else:
         raise RuntimeError('mt4[%s] is not initialized.' % alias)
+
