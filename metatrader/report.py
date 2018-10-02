@@ -111,7 +111,10 @@ class BacktestReport(BaseReport):
             elif td.text == 'Gross loss':
                 self.gross_loss = float(tds[index+1].text)
             elif td.text == 'Profit factor':
-                self.profit_factor = float(tds[index+1].text)
+                if(tds[index+1].text != ''):
+                    self.profit_factor = float(tds[index+1].text)
+                else:
+                    self.profit_factor = 0
             elif td.text == 'Expected payoff':
                 self.expected_payoff = float(tds[index+1].text)
             elif td.text == 'Absolute drawdown':

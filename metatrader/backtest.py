@@ -9,6 +9,7 @@ Created on 2015/01/25
 import logging
 import os
 import hashlib
+import shutil
 
 from mt4 import get_mt4
 from mt4 import DEFAULT_MT4_NAME
@@ -34,6 +35,7 @@ class BackTest(object):
     def __init__(self, ea_name, param, symbol, period, from_date, to_date, deposit=1000, model=0, spread=5, replace_repot=True,test_visual=False):
         self.param = param
         self.symbol = symbol
+        self.period = period
         self.from_date = from_date
         self.to_date = to_date
         self.model = model
@@ -106,6 +108,7 @@ class BackTest(object):
             fp.write('TestExpertParameters=%s.set\n' % self.ea_name)
             fp.write('TestSymbol=%s\n' % self.symbol)
             fp.write('TestModel=%s\n' % self.model)
+            fp.write('TestPeriod=%s\n' % self.period)
             fp.write('TestSpread=%s\n' % self.spread)
             fp.write('TestOptimization=%s\n' % str(self.optimization).lower())
             fp.write('TestDateEnable=true\n')
@@ -125,6 +128,13 @@ class BackTest(object):
         """
         mt4 = get_mt4(alias=alias)
         param_file = os.path.join(mt4.appdata_path, 'tester', '%s.set' % self.ea_name)
+
+        if(isinstance(self.param, basestring)):
+            if os.path.exists(self.param):
+                shutil.copy2(self.param, param_file)
+                return
+        
+        
 
         with open(param_file, 'w') as fp:
             for k in self.param:
@@ -197,11 +207,11 @@ class BackTest(object):
             fp.write('      <add key="GMTOffset" value="2" />\n')
             fp.write('      <add key="DST" value="1" />\n')
             fp.write('      <add key="UseVariableSpread" value="True" />\n')
-            fp.write('      <add key="SlippageEnabled" value="False" />\n')
-            fp.write('      <add key="ReproducibleSlippage" value="True" /><add key="OptimizationSlippage" value="True" /><add key="LimitOrderSlippage" value="True" />\n')
+            fp.write('      <add key="SlippageEnabled" value="True" />\n')
+            fp.write('      <add key="ReproducibleSlippage" value="True" /><add key="OptimizationSlippage" value="False" /><add key="LimitOrderSlippage" value="True" />\n')
             fp.write('      <add key="StopOrderSlippage" value="True" /><add key="SlOrderSlippage" value="True" /><add key="TpOrderSlippage" value="True" />\n')
-            fp.write('      <add key="LatencyBasedSlippage" value="False" /><add key="MinimumSlippageDelay" value="200" /><add key="MaximumSlippageDelay" value="300" />\n')
-            fp.write('      <add key="MinimumPendingSlippageDelay" value="100" /><add key="MaximumPendingSlippageDelay" value="150" /><add key="DealerStyleSlippage" value="True" />\n')
+            fp.write('      <add key="LatencyBasedSlippage" value="True" /><add key="MinimumSlippageDelay" value="250" /><add key="MaximumSlippageDelay" value="250" />\n')
+            fp.write('      <add key="MinimumPendingSlippageDelay" value="125" /><add key="MaximumPendingSlippageDelay" value="125" /><add key="DealerStyleSlippage" value="False" />\n')
             fp.write('      <add key="MaxFavorableSlippage" value="10" /><add key="MaxUnfavorableSlippage" value="10" /><add key="UseCustomSlippageChance" value="False" />\n')
             fp.write('      <add key="CustomSlippageChance" value="100" /><add key="UseCustomFavorableChance" value="False" /><add key="FavorableSlippageChance" value="50" />\n')
             fp.write('      <add key="StandardDeviationSlippage" value="False" /><add key="SlippageMean" value="0" /><add key="SlippageStDev" value="30" />\n')
