@@ -10,6 +10,8 @@ import logging
 import os
 import hashlib
 import shutil
+import requests
+import re
 
 from mt4 import get_mt4
 from mt4 import DEFAULT_MT4_NAME
@@ -44,6 +46,7 @@ class BackTest(object):
         self.test_visual = test_visual
         self.deposit = deposit
         self.ea_md5 = ""
+        self.paramConfig = ""
 
         ea_name = ea_name.replace(".ex4","")
         path, ea = os.path.split(ea_name)
@@ -68,6 +71,8 @@ class BackTest(object):
         self._create_ini(alias=alias)
         self._create_conf(alias=alias)
         self._create_param(alias=alias)
+        self._loadParamString(alias=alias)
+
 
     def _create_conf(self, alias=DEFAULT_MT4_NAME):
         """
@@ -118,6 +123,19 @@ class BackTest(object):
             fp.write('TestReplaceReport=%s\n' % str(self.replace_report).lower())
             fp.write('TestVisualEnable=%s\n' % str(self.test_visual).lower())
             fp.write('TestShutdownTerminal=%s\n' % str(shutdown_terminal).lower())
+    
+    def _loadParamString(self, alias=DEFAULT_MT4_NAME):
+        mt4 = get_mt4(alias=alias)
+        param_file = os.path.join(mt4.appdata_path, 'tester', '%s.set' % self.ea_name)
+
+        setString = ""
+        with open(param_file) as f:
+            for line in f:
+                if not (re.search(r'^.+\,[F,1,2,3]=', line)):
+                    setString += line
+
+        setString = setString.splitlines()
+        self.paramConfig = ";".join(setString)
 
     def _create_param(self, alias=DEFAULT_MT4_NAME):
         """
@@ -132,8 +150,7 @@ class BackTest(object):
         if(isinstance(self.param, basestring)):
             if os.path.exists(self.param):
                 shutil.copy2(self.param, param_file)
-                return
-        
+                return        
         
 
         with open(param_file, 'w') as fp:
@@ -247,6 +264,29 @@ class BackTest(object):
         conf_file = os.path.join(mt4.appdata_path, 'tester', '%s.conf' % self.ea_name)
         return conf_file
 
+    def checkIfExists(self, alias=DEFAULT_MT4_NAME):
+        checkData = {
+            "action":"check",
+            "ea":self.ea_md5,
+            "paramsConfig": self.paramConfig,
+            "symbol": self.symbol,
+            "period": self.period,
+            "ano": self.from_date.year,
+            "mes": self.from_date.month
+        } 
+        #print checkData
+
+        r = requests.post('http://167.99.227.51/bt/check.php', data=checkData)
+        result = r.json()
+        #print result
+        if "exists" in result:
+            return True
+        
+        #Do not exist
+        return False
+        #mt4 = get_mt4(alias=DEFAULT_MT4_NAME)
+        #ea_file = os.path.join(mt4.appdata_path, 'MQL4', 'Experts', self.ea_fullname+'.ex4')
+
 
     def run(self, alias=DEFAULT_MT4_NAME):
         """
@@ -258,13 +298,16 @@ class BackTest(object):
         self.optimization = False
 
         self._prepare(alias=alias)
-        bt_conf = self._get_conf_abs_path(alias=alias)
-    
-        mt4 = get_mt4(alias=alias)
-        mt4.run(self.ea_name, conf=bt_conf)
-    
-        ret = BacktestReport(self)
-        return ret
+        if(self.checkIfExists()):
+            print "Backtest already exists"
+        else:
+            bt_conf = self._get_conf_abs_path(alias=alias)
+        
+            mt4 = get_mt4(alias=alias)
+            mt4.run(self.ea_name, conf=bt_conf)
+        
+            ret = BacktestReport(self)
+            return ret
 
     def optimize(self, alias=DEFAULT_MT4_NAME):
         """
@@ -279,7 +322,7 @@ class BackTest(object):
         mt4.run(self.ea_name, conf=bt_conf)
         
         ret = OptimizationReport(self)
-        return ret
+        return ret        
 
 
 def load_from_file(dsl_file):
