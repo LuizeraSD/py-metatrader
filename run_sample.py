@@ -1,84 +1,27 @@
-#TODO: Usar MD5 para comparar o setParams ao inves do texto inteiro
+#TODO: Adicionar upload do Gif
 #TODO: Adicionar opcao de Optimization mode, ele escolhe os 5 melhores e roda 1 ano (mes a mes)
-#TODO: Adicionar opcao de rodar em varios pares diferentes
 
-from datetime import datetime
-from metatrader.mt4 import initizalize
-from metatrader.backtest import BackTest
-import requests
+from metatrader.mt4 import runBackTest
 
-SYMBOL = 'USDJPY'
-PERIOD = 'M15'
 METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4'
 EA_NAME = 'Spartan Bolt V6\\Spartan Bolt V6.ex4'
 SET_FILE = 'C:\\Users\\Luizera\\OneDrive\\BackTests\\_SetsStore\\PPP_USDJPY5M_Desde2017_600percent.set'
+
+PERIOD = 'M15'
 YEAR = 2018
-MONTH = 1
+MONTH = 2
 
-initizalize(METATRADER_DIR)
+#Major Symbols
+SYMBOLS = ["EURUSD","GBPUSD","USDJPY","USDCAD","USDCHF","AUDUSD","NZDUSD"]
 
-if MONTH == None:
-    iniMonth = 1
-    maxMonth = 12
-    today = datetime.today()
-    if(today.year == YEAR):
-        maxMonth = today.month
-else:
-    iniMonth = MONTH
-    maxMonth = MONTH+1
+#If you want more symbols, just uncomment the desired line below:
+#SYMBOLS.extend(["EURJPY","EURGBP","EURCHF","EURCAD","EURAUD","EURNZD"]) #EUR Crosses 
+#SYMBOLS.extend(["GBPAUD","GBPCAD","GBPCHF","GBPJPY","GBPNZD"]) #GBP Crosses 
+#SYMBOLS.extend(["AUDJPY","AUDCAD","AUDCHF","AUDNZD"]) #AUD Crosses 
+#SYMBOLS.extend(["NZDCAD","NZDCHF","NZDJPY"]) #NZD Crosses 
+#SYMBOLS.extend(["CADJPY","CADCHF"]) #CAD Crosses 
+#SYMBOLS.extend(["CHFJPY"]) #CHF Cross 
+#SYMBOLS.extend(["XAUUSD"]) #GOLD
 
-for MONTH in range(iniMonth,maxMonth):
-    backtest = BackTest(EA_NAME, SET_FILE, SYMBOL, PERIOD, datetime(YEAR, MONTH, 1), datetime(YEAR, MONTH+1, 1))
-    ret = backtest.run()
-    
-    if(ret):
-        retdata = {
-            "action": "register",
-            "ea": backtest.ea_md5,
-            "ea_name": backtest.ea_name,
-            "paramsConfig": backtest.paramConfig,
-            "ano": YEAR,
-            "mes": MONTH,
-            "symbol": SYMBOL,
-            "period": PERIOD,
-            "profit": ret.profit,
-            "deposit": backtest.deposit,
-            "modelQuality": ret.modeling_quality_percentage,
-            "profitFactor": ret.profit_factor,
-            "payoff": ret.expected_payoff,
-            "maxDrawDown": ret.max_drawdown,
-            "maxDrawDownRate": ret.max_drawdown_rate,
-            "relDrawDown": ret.relative_drawdown,
-            "relDrawDownRate": ret.relative_drawdown_rate,
-            "absDrawDown": ret.abs_drawdown,
-            "grossProfit": ret.gross_profit,
-            "grossLoss": ret.gross_loss,
-            "totalTrades": ret.total_trades,
-            "largestProfit": ret.largest_profit_trade,
-            "largestLoss": ret.largest_loss_trade,
-            "avgProfitTrade": ret.average_profit_trade,
-            "avgLossTrade": ret.average_loss_trade,    
-            "maxConsecutiveProfitCount": ret.max_consecutive_profit_count,
-            "maxConsecutiveProfit": ret.max_consecutive_profit,
-            "maxConsecutiveLossCount": ret.max_consecutive_loss_count,
-            "maxConsecutiveLoss": ret.max_consecutive_loss,
-            "maxConsecutiveWinsCount": ret.max_consecutive_wins_count,
-            "maxConsecutiveWinsProfit": ret.max_consecutive_wins_profit,
-            "maxConsecutiveLossesCount": ret.max_consecutive_losses_count,
-            "maxConsecutiveLosses": ret.max_consecutive_losses_loss,
-            "profitTrades": ret.profit_trades,
-            "profitTradesRate": ret.profit_trades_rate,
-            "lossTrades": ret.loss_trades,
-            "lossTradesRate": ret.loss_trades_rate,
-            "avgConsecutiveWins": ret.ave_consecutive_wins,
-            "avgConsecutiveLosses": ret.ave_consecutive_losses,
-            "shortPositions": ret.short_positions,
-            "shortPositionsRate": ret.short_positions_rate,
-            "longPositions": ret.long_positions,
-            "longPositionsRate": ret.long_positions_rate,
-        }
-        print retdata
 
-        r = requests.post('http://167.99.227.51/bt/register.php', data=retdata)
-        print r.status_code
-        print r.json()
+runBackTest(METATRADER_DIR, EA_NAME, SET_FILE, SYMBOLS, PERIOD, YEAR, MONTH)

@@ -15,6 +15,7 @@ import re
 
 from mt4 import get_mt4
 from mt4 import DEFAULT_MT4_NAME
+
 from __builtin__ import str
 
 class BackTest(object):
@@ -71,7 +72,16 @@ class BackTest(object):
         self._create_ini(alias=alias)
         self._create_conf(alias=alias)
         self._create_param(alias=alias)
-        self._loadParamString(alias=alias)
+        self._loadParamString(alias=alias)        
+        
+        mt4 = get_mt4(alias=alias)
+        report_file = os.path.join(mt4.appdata_path, '%s.htm' % self.ea_name)        
+        if os.path.exists(report_file):
+            os.remove(report_file)
+
+        gif_file = os.path.join(mt4.appdata_path, '%s.gif' % self.ea_name)
+        if os.path.exists(gif_file):
+            os.remove(gif_file)
 
 
     def _create_conf(self, alias=DEFAULT_MT4_NAME):
@@ -97,7 +107,7 @@ class BackTest(object):
 			TestVisualEnable=false
         """
 
-
+        #Get config file
         mt4 = get_mt4(alias=alias)
         conf_file = os.path.join(mt4.appdata_path, 'tester', '%s.conf' % self.ea_name)
         report_dir = os.path.join(mt4.appdata_path, 'report')
@@ -225,13 +235,19 @@ class BackTest(object):
             fp.write('      <add key="DST" value="1" />\n')
             fp.write('      <add key="UseVariableSpread" value="True" />\n')
             fp.write('      <add key="SlippageEnabled" value="True" />\n')
-            fp.write('      <add key="ReproducibleSlippage" value="True" /><add key="OptimizationSlippage" value="False" /><add key="LimitOrderSlippage" value="True" />\n')
+
+            fp.write('      <add key="ReproducibleSlippage" value="False" />\n')
+            fp.write('      <add key="OptimizationSlippage" value="False" /><add key="LimitOrderSlippage" value="True" />\n')
             fp.write('      <add key="StopOrderSlippage" value="True" /><add key="SlOrderSlippage" value="True" /><add key="TpOrderSlippage" value="True" />\n')
             fp.write('      <add key="LatencyBasedSlippage" value="True" /><add key="MinimumSlippageDelay" value="250" /><add key="MaximumSlippageDelay" value="250" />\n')
-            fp.write('      <add key="MinimumPendingSlippageDelay" value="125" /><add key="MaximumPendingSlippageDelay" value="125" /><add key="DealerStyleSlippage" value="False" />\n')
-            fp.write('      <add key="MaxFavorableSlippage" value="10" /><add key="MaxUnfavorableSlippage" value="10" /><add key="UseCustomSlippageChance" value="False" />\n')
+            fp.write('      <add key="MinimumPendingSlippageDelay" value="125" /><add key="MaximumPendingSlippageDelay" value="125" />\n')
+
+            fp.write('      <add key="DealerStyleSlippage" value="True" />\n')
+            fp.write('      <add key="MaxFavorableSlippage" value="5" /><add key="MaxUnfavorableSlippage" value="10" /><add key="UseCustomSlippageChance" value="False" />\n')
             fp.write('      <add key="CustomSlippageChance" value="100" /><add key="UseCustomFavorableChance" value="False" /><add key="FavorableSlippageChance" value="50" />\n')
-            fp.write('      <add key="StandardDeviationSlippage" value="False" /><add key="SlippageMean" value="0" /><add key="SlippageStDev" value="30" />\n')
+
+            fp.write('      <add key="StandardDeviationSlippage" value="False" />\n')
+            fp.write('<add key="SlippageMean" value="0" /><add key="SlippageStDev" value="30" />\n')
             fp.write('      <add key="OverrideMinLot" value="False" />\n')
             fp.write('      <add key="MinLot" value="0.01" />\n')
             fp.write('      <add key="OverrideMaxLot" value="False" />\n')
@@ -280,6 +296,7 @@ class BackTest(object):
         result = r.json()
         #print result
         if "exists" in result:
+            print("Backtest already exists for %s in %s-%s, ignoring..." % (self.symbol, self.from_date.year, self.from_date.month))
             return True
         
         #Do not exist
@@ -298,9 +315,7 @@ class BackTest(object):
         self.optimization = False
 
         self._prepare(alias=alias)
-        if(self.checkIfExists()):
-            print "Backtest already exists"
-        else:
+        if(not self.checkIfExists()):
             bt_conf = self._get_conf_abs_path(alias=alias)
         
             mt4 = get_mt4(alias=alias)

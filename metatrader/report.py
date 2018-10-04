@@ -9,6 +9,7 @@ Created on 2015/01/31
 from mt4 import get_mt4
 from mt4 import DEFAULT_MT4_NAME
 import logging
+import os
 
 def has_divtag_with_style(tag):
     return tag.name == 'div' and tag.has_attr('style')
@@ -88,15 +89,22 @@ class BacktestReport(BaseReport):
         super(BacktestReport, self).__init__(backtest)
         
 
-        report_file = get_report_abs_path(backtest.ea_name, alias=alias)
-        self.report_file = report_file
+        report_file = get_report_abs_path(self.ea_name, alias=alias)
+        
 
+        self.report_file = report_file
         with open(report_file, 'r') as fp:
             raw_html = fp.read()
             
         b_soup = BeautifulSoup(raw_html,features="html.parser")
         summary_in_table = b_soup.find_all('table')[0]
         tds = summary_in_table.find_all('td')
+
+        for index, td in enumerate(tds):
+            if td.text == 'Total trades':
+                self.total_trades = int(tds[index+1].text)
+
+        if(self.total_trades == 0): return
         
         for index, td in enumerate(tds):
             if td.text == 'Initial deposit':
@@ -126,9 +134,7 @@ class BacktestReport(BaseReport):
             elif td.text == 'Relative drawdown':
                 data, rate = self.get_data_and_rate(tds[index+1].text)
                 self.relative_drawdown_rate = rate
-                self.relative_drawdown = data
-            elif td.text == 'Total trades':
-                self.total_trades = int(tds[index+1].text)
+                self.relative_drawdown = data            
             elif td.text == 'Short positions (won %)':
                 data, rate = self.get_data_and_rate(tds[index+1].text)
                 self.short_positions_rate = rate
@@ -241,6 +247,7 @@ class ShortReport(BaseReport):
         self.max_drawdown = result.pop('max_drawdown')
         self.max_drawdown_rate = result.pop('max_drawdown_rate')
         self.initial_deposit = result.pop('initial_deposit')
+        
 
 class OptimizationReport():
     """
@@ -356,8 +363,10 @@ class OptimizationReport():
 
     def __init__(self, backtest, alias=DEFAULT_MT4_NAME):
         from exception import InvalidReportFormat
+
+        self.ea_name = backtest.ea_name
         
-        report_file = get_report_abs_path(backtest.ea_name, alias=alias)
+        report_file = get_report_abs_path(self.ea_name, alias=alias)
 
         with open(report_file, 'r') as fp:
             raw_html = fp.read()

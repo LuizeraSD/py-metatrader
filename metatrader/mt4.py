@@ -6,6 +6,9 @@
 import os
 import logging
 import hashlib
+import requests
+from datetime import datetime
+
 
 _mt4s = {}
 
@@ -210,3 +213,88 @@ def get_mt4(alias=DEFAULT_MT4_NAME):
     else:
         raise RuntimeError('mt4[%s] is not initialized.' % alias)
 
+
+def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=None):
+    """
+    Notes:
+      run the backtest set
+    Returns:
+      boolean: result of the success of the backtest set
+    """
+    initizalize(metatrade_dir)
+    from metatrader.backtest import BackTest
+
+    if isinstance(symbols, basestring):
+        symbols = [symbols]
+
+    if month == None:
+        iniMonth = 1
+        maxMonth = 12
+        today = datetime.today()
+        if(today.year == year):
+            maxMonth = today.month
+    else:
+        iniMonth = month
+        maxMonth = month+1
+
+    for symbol in symbols:
+        for month in range(iniMonth,maxMonth):
+            backtest = BackTest(ea_name, set_file, symbol, period, datetime(year, month, 1), datetime(year, month+1, 1))
+            ret = backtest.run()
+
+            if(ret):
+
+                if(ret.total_trades==0):
+                    print("Zero trades for %s in %s-%s, ignoring..." % (symbol, year, month))
+                    continue
+
+                retdata = {
+                    "action": "register",
+                    "ea": backtest.ea_md5,
+                    "ea_name": backtest.ea_name,
+                    "paramsConfig": backtest.paramConfig,
+                    "ano": year,
+                    "mes": month,
+                    "symbol": symbol,
+                    "period": period,
+                    "profit": ret.profit,
+                    "deposit": backtest.deposit,
+                    "modelQuality": ret.modeling_quality_percentage,
+                    "profitFactor": ret.profit_factor,
+                    "payoff": ret.expected_payoff,
+                    "maxDrawDown": ret.max_drawdown,
+                    "maxDrawDownRate": ret.max_drawdown_rate,
+                    "relDrawDown": ret.relative_drawdown,
+                    "relDrawDownRate": ret.relative_drawdown_rate,
+                    "absDrawDown": ret.abs_drawdown,
+                    "grossProfit": ret.gross_profit,
+                    "grossLoss": ret.gross_loss,
+                    "totalTrades": ret.total_trades,
+                    "largestProfit": ret.largest_profit_trade,
+                    "largestLoss": ret.largest_loss_trade,
+                    "avgProfitTrade": ret.average_profit_trade,
+                    "avgLossTrade": ret.average_loss_trade,    
+                    "maxConsecutiveProfitCount": ret.max_consecutive_profit_count,
+                    "maxConsecutiveProfit": ret.max_consecutive_profit,
+                    "maxConsecutiveLossCount": ret.max_consecutive_loss_count,
+                    "maxConsecutiveLoss": ret.max_consecutive_loss,
+                    "maxConsecutiveWinsCount": ret.max_consecutive_wins_count,
+                    "maxConsecutiveWinsProfit": ret.max_consecutive_wins_profit,
+                    "maxConsecutiveLossesCount": ret.max_consecutive_losses_count,
+                    "maxConsecutiveLosses": ret.max_consecutive_losses_loss,
+                    "profitTrades": ret.profit_trades,
+                    "profitTradesRate": ret.profit_trades_rate,
+                    "lossTrades": ret.loss_trades,
+                    "lossTradesRate": ret.loss_trades_rate,
+                    "avgConsecutiveWins": ret.ave_consecutive_wins,
+                    "avgConsecutiveLosses": ret.ave_consecutive_losses,
+                    "shortPositions": ret.short_positions,
+                    "shortPositionsRate": ret.short_positions_rate,
+                    "longPositions": ret.long_positions,
+                    "longPositionsRate": ret.long_positions_rate,
+                }
+                print retdata
+
+                r = requests.post('http://167.99.227.51/bt/register.php', data=retdata)
+                print r.status_code
+                print r.json()
