@@ -35,19 +35,23 @@ class BackTest(object):
       replace_report(bool): replace report flag. replace report is enabled if True
 
     """
-    def __init__(self, ea_name, param, symbol, period, from_date, to_date, deposit=1000, model=0, spread=5, replace_repot=True,test_visual=False):
+    def __init__(self, ea_name, param, symbol, period, from_date, to_date, deposit=1000, uploadBT=False, model=0, spread=5, replace_repot=True,test_visual=False):
         self.param = param
         self.symbol = symbol
         self.period = period
         self.from_date = from_date
         self.to_date = to_date
+        self.deposit = deposit
+        self.uploadBT = uploadBT
         self.model = model
         self.spread = spread
         self.replace_report = replace_repot
-        self.test_visual = test_visual
-        self.deposit = deposit
+        self.test_visual = test_visual        
         self.ea_md5 = ""
         self.paramConfig = ""
+        self.base_dir = ""
+        self.relative_report_dir = ""
+        self.full_report_dir = ""        
 
         ea_name = ea_name.replace(".ex4","")
         path, ea = os.path.split(ea_name)
@@ -73,17 +77,19 @@ class BackTest(object):
         self._create_conf(alias=alias)
         self._create_param(alias=alias)
         self._loadParamString(alias=alias)        
-        
-        mt4 = get_mt4(alias=alias)
-        report_file = os.path.join(mt4.appdata_path, '%s.htm' % self.ea_name)        
-        if os.path.exists(report_file):
-            os.remove(report_file)
+    
+    def _removeOldReport(self):
+        #Force remove old reports if uploadBT is True
+        if(self.uploadBT):
+            report_file = os.path.join(self.full_report_dir, '%s.htm' % self.ea_name)
+            if os.path.exists(report_file):
+                os.remove(report_file)
 
-        gif_file = os.path.join(mt4.appdata_path, '%s.gif' % self.ea_name)
-        if os.path.exists(gif_file):
-            os.remove(gif_file)
+            gif_file = os.path.join(self.full_report_dir, '%s.gif' % self.ea_name)
+            if os.path.exists(gif_file):
+                os.remove(gif_file)
 
-
+    
     def _create_conf(self, alias=DEFAULT_MT4_NAME):
         """
         Notes:
@@ -110,9 +116,17 @@ class BackTest(object):
         #Get config file
         mt4 = get_mt4(alias=alias)
         conf_file = os.path.join(mt4.appdata_path, 'tester', '%s.conf' % self.ea_name)
-        report_dir = os.path.join(mt4.appdata_path, 'report')
-        if not os.path.exists(report_dir):
-            os.makedirs(report_dir)
+        datedir = str(self.from_date.year)+"-"+str(self.from_date.month)+"-"+str(self.from_date.day)
+        symbolperiod = str(self.symbol)+"-"+str(self.period)
+        
+        self.base_dir = os.path.join(mt4.appdata_path,'report', self.ea_name, symbolperiod)
+
+        self.relative_report_dir = os.path.join('report', self.ea_name, symbolperiod, datedir)
+        self.full_report_dir = os.path.join(mt4.appdata_path, self.relative_report_dir)
+        
+
+        if not os.path.exists(self.full_report_dir):
+            os.makedirs(self.full_report_dir)
 
         # shutdown_terminal must be True.
         # If false, popen don't end and backtest report analyze don't start.
@@ -129,7 +143,8 @@ class BackTest(object):
             fp.write('TestDateEnable=true\n')
             fp.write('TestFromDate=%s\n' % self.from_date.strftime('%Y.%m.%d'))
             fp.write('TestToDate=%s\n' % self.to_date.strftime('%Y.%m.%d'))
-            fp.write('TestReport=%s\n' % self.ea_name)
+            #fp.write('TestReport=%s.htm\n' % self.ea_name)
+            fp.write('TestReport=%s\\%s.htm\n' % (self.relative_report_dir, self.ea_name))
             fp.write('TestReplaceReport=%s\n' % str(self.replace_report).lower())
             fp.write('TestVisualEnable=%s\n' % str(self.test_visual).lower())
             fp.write('TestShutdownTerminal=%s\n' % str(shutdown_terminal).lower())
@@ -236,7 +251,7 @@ class BackTest(object):
             fp.write('      <add key="UseVariableSpread" value="True" />\n')
             fp.write('      <add key="SlippageEnabled" value="True" />\n')
 
-            fp.write('      <add key="ReproducibleSlippage" value="False" />\n')
+            fp.write('      <add key="ReproducibleSlippage" value="True" />\n')
             fp.write('      <add key="OptimizationSlippage" value="False" /><add key="LimitOrderSlippage" value="True" />\n')
             fp.write('      <add key="StopOrderSlippage" value="True" /><add key="SlOrderSlippage" value="True" /><add key="TpOrderSlippage" value="True" />\n')
             fp.write('      <add key="LatencyBasedSlippage" value="True" /><add key="MinimumSlippageDelay" value="250" /><add key="MaximumSlippageDelay" value="250" />\n')
@@ -247,7 +262,7 @@ class BackTest(object):
             fp.write('      <add key="CustomSlippageChance" value="100" /><add key="UseCustomFavorableChance" value="False" /><add key="FavorableSlippageChance" value="50" />\n')
 
             fp.write('      <add key="StandardDeviationSlippage" value="False" />\n')
-            fp.write('<add key="SlippageMean" value="0" /><add key="SlippageStDev" value="30" />\n')
+            fp.write('      <add key="SlippageMean" value="0" /><add key="SlippageStDev" value="30" />\n')
             fp.write('      <add key="OverrideMinLot" value="False" />\n')
             fp.write('      <add key="MinLot" value="0.01" />\n')
             fp.write('      <add key="OverrideMaxLot" value="False" />\n')
@@ -281,6 +296,11 @@ class BackTest(object):
         return conf_file
 
     def checkIfExists(self, alias=DEFAULT_MT4_NAME):
+        
+        #Dont make the check if upload its disabled
+        if(not self.uploadBT):
+            return False
+
         checkData = {
             "action":"check",
             "ea":self.ea_md5,
@@ -299,10 +319,8 @@ class BackTest(object):
             print("Backtest already exists for %s in %s-%s, ignoring..." % (self.symbol, self.from_date.year, self.from_date.month))
             return True
         
-        #Do not exist
+        #Does not exist
         return False
-        #mt4 = get_mt4(alias=DEFAULT_MT4_NAME)
-        #ea_file = os.path.join(mt4.appdata_path, 'MQL4', 'Experts', self.ea_fullname+'.ex4')
 
 
     def run(self, alias=DEFAULT_MT4_NAME):
@@ -316,6 +334,7 @@ class BackTest(object):
 
         self._prepare(alias=alias)
         if(not self.checkIfExists()):
+            self._removeOldReport()
             bt_conf = self._get_conf_abs_path(alias=alias)
         
             mt4 = get_mt4(alias=alias)

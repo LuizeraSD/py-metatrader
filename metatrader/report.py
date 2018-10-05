@@ -33,11 +33,13 @@ class BaseReport(object):
     def __init__(self, backtest):
         self.ea_name = backtest.ea_name
         self.param = backtest.param
+        self.period = backtest.period
         self.symbol = backtest.symbol
         self.from_date = backtest.from_date
         self.to_date = backtest.to_date
         self.model = backtest.model
         self.spread = backtest.spread
+        self.csv_file = None
 
 class BacktestReport(BaseReport):
     """
@@ -89,7 +91,7 @@ class BacktestReport(BaseReport):
         super(BacktestReport, self).__init__(backtest)
         
 
-        report_file = get_report_abs_path(self.ea_name, alias=alias)
+        report_file = get_report_abs_path(self, alias=alias)
         
 
         self.report_file = report_file
@@ -366,7 +368,7 @@ class OptimizationReport():
 
         self.ea_name = backtest.ea_name
         
-        report_file = get_report_abs_path(self.ea_name, alias=alias)
+        report_file = get_report_abs_path(self, alias=alias)
 
         with open(report_file, 'r') as fp:
             raw_html = fp.read()
@@ -381,8 +383,10 @@ class OptimizationReport():
         else:
             raise InvalidReportFormat(report_file, r'"Optimization Report" not found in html')
         
-def get_report_abs_path(ea_name, alias=DEFAULT_MT4_NAME):
+def get_report_abs_path(self, alias=DEFAULT_MT4_NAME):
     import os
-    mt4 = get_mt4(alias=alias)
-    report = os.path.join(mt4.appdata_path, '%s.htm' % ea_name)
+    mt4 = get_mt4(alias=alias)    
+    datedir = str(self.from_date.year)+"-"+str(self.from_date.month)+"-"+str(self.from_date.day)
+    symbolperiod = str(self.symbol)+"-"+str(self.period)
+    report = os.path.join(mt4.appdata_path, 'report', self.ea_name, symbolperiod, datedir, '%s.htm' % self.ea_name)
     return report

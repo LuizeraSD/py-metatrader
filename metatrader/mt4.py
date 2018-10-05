@@ -4,10 +4,11 @@
 @ModifiedBy: LuizeraSD
 """
 import os
+import csv
 import logging
 import hashlib
 import requests
-from datetime import datetime
+import datetime
 
 
 _mt4s = {}
@@ -214,7 +215,7 @@ def get_mt4(alias=DEFAULT_MT4_NAME):
         raise RuntimeError('mt4[%s] is not initialized.' % alias)
 
 
-def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=None):
+def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=None, weekly=False, deposit=1000, uploadBT=False):
     """
     Notes:
       run the backtest set
@@ -226,75 +227,128 @@ def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=N
 
     if isinstance(symbols, basestring):
         symbols = [symbols]
+    
+    today = datetime.date.today()
 
     if month == None:
         iniMonth = 1
-        maxMonth = 12
-        today = datetime.today()
+        maxMonth = 12        
         if(today.year == year):
             maxMonth = today.month
     else:
         iniMonth = month
         maxMonth = month+1
 
+    iniDate = datetime.date(year, iniMonth,1)
+    idx = iniDate.weekday()+1
+    sunday = iniDate - datetime.timedelta(days=idx)
+    saturday = sunday + datetime.timedelta(days=6)
+
     for symbol in symbols:
-        for month in range(iniMonth,maxMonth):
-            backtest = BackTest(ea_name, set_file, symbol, period, datetime(year, month, 1), datetime(year, month+1, 1))
-            ret = backtest.run()
+        if(weekly):
+            while sunday < datetime.date(year, maxMonth, 1):
+                print("Generating BackTest for %s from %s to %s..." % (symbol, sunday, saturday))
+                backtest = BackTest(ea_name, set_file, symbol, period, sunday, saturday, deposit, uploadBT)
+                ret = backtest.run()
+                if(ret):
+                    collectBackTest(backtest, ret, year, month, uploadBT)
+                sunday += datetime.timedelta(days=7)
+                saturday += datetime.timedelta(days=7)
+        else:
+            for month in range(iniMonth,maxMonth):
+                print("Generating BackTest for %s in %s-%s..." % (symbol, year, month))
+                backtest = BackTest(ea_name, set_file, symbol, period, datetime.date(year, month, 1), datetime.date(year, month+1, 1), deposit, uploadBT)
+                ret = backtest.run()
+                if(ret):
+                    collectBackTest(backtest, ret, year, month, uploadBT)
 
-            if(ret):
+def collectBackTest(backtest, ret, year, month, uploadBT):
+    if(ret.total_trades==0):
+        print("Zero trades for %s in %s-%s, ignoring..." % (backtest.symbol, year, month))
+        return
 
-                if(ret.total_trades==0):
-                    print("Zero trades for %s in %s-%s, ignoring..." % (symbol, year, month))
-                    continue
+    retdata = {
+        "action": "register",
+        "ea": backtest.ea_md5,
+        "ea_name": backtest.ea_name,
+        "paramsConfig": backtest.paramConfig,
+        "ano": year,
+        "mes": month,
+        "symbol": backtest.symbol,
+        "period": backtest.period,
+        "profit": ret.profit,
+        "deposit": backtest.deposit,
+        "modelQuality": ret.modeling_quality_percentage,
+        "profitFactor": ret.profit_factor,
+        "payoff": ret.expected_payoff,
+        "maxDrawDown": ret.max_drawdown,
+        "maxDrawDownRate": ret.max_drawdown_rate,
+        "relDrawDown": ret.relative_drawdown,
+        "relDrawDownRate": ret.relative_drawdown_rate,
+        "absDrawDown": ret.abs_drawdown,
+        "grossProfit": ret.gross_profit,
+        "grossLoss": ret.gross_loss,
+        "totalTrades": ret.total_trades,
+        "largestProfit": ret.largest_profit_trade,
+        "largestLoss": ret.largest_loss_trade,
+        "avgProfitTrade": ret.average_profit_trade,
+        "avgLossTrade": ret.average_loss_trade,    
+        "maxConsecutiveProfitCount": ret.max_consecutive_profit_count,
+        "maxConsecutiveProfit": ret.max_consecutive_profit,
+        "maxConsecutiveLossCount": ret.max_consecutive_loss_count,
+        "maxConsecutiveLoss": ret.max_consecutive_loss,
+        "maxConsecutiveWinsCount": ret.max_consecutive_wins_count,
+        "maxConsecutiveWinsProfit": ret.max_consecutive_wins_profit,
+        "maxConsecutiveLossesCount": ret.max_consecutive_losses_count,
+        "maxConsecutiveLosses": ret.max_consecutive_losses_loss,
+        "profitTrades": ret.profit_trades,
+        "profitTradesRate": ret.profit_trades_rate,
+        "lossTrades": ret.loss_trades,
+        "lossTradesRate": ret.loss_trades_rate,
+        "avgConsecutiveWins": ret.ave_consecutive_wins,
+        "avgConsecutiveLosses": ret.ave_consecutive_losses,
+        "shortPositions": ret.short_positions,
+        "shortPositionsRate": ret.short_positions_rate,
+        "longPositions": ret.long_positions,
+        "longPositionsRate": ret.long_positions_rate,
+    }
+    #print retdata
 
-                retdata = {
-                    "action": "register",
-                    "ea": backtest.ea_md5,
-                    "ea_name": backtest.ea_name,
-                    "paramsConfig": backtest.paramConfig,
-                    "ano": year,
-                    "mes": month,
-                    "symbol": symbol,
-                    "period": period,
-                    "profit": ret.profit,
-                    "deposit": backtest.deposit,
-                    "modelQuality": ret.modeling_quality_percentage,
-                    "profitFactor": ret.profit_factor,
-                    "payoff": ret.expected_payoff,
-                    "maxDrawDown": ret.max_drawdown,
-                    "maxDrawDownRate": ret.max_drawdown_rate,
-                    "relDrawDown": ret.relative_drawdown,
-                    "relDrawDownRate": ret.relative_drawdown_rate,
-                    "absDrawDown": ret.abs_drawdown,
-                    "grossProfit": ret.gross_profit,
-                    "grossLoss": ret.gross_loss,
-                    "totalTrades": ret.total_trades,
-                    "largestProfit": ret.largest_profit_trade,
-                    "largestLoss": ret.largest_loss_trade,
-                    "avgProfitTrade": ret.average_profit_trade,
-                    "avgLossTrade": ret.average_loss_trade,    
-                    "maxConsecutiveProfitCount": ret.max_consecutive_profit_count,
-                    "maxConsecutiveProfit": ret.max_consecutive_profit,
-                    "maxConsecutiveLossCount": ret.max_consecutive_loss_count,
-                    "maxConsecutiveLoss": ret.max_consecutive_loss,
-                    "maxConsecutiveWinsCount": ret.max_consecutive_wins_count,
-                    "maxConsecutiveWinsProfit": ret.max_consecutive_wins_profit,
-                    "maxConsecutiveLossesCount": ret.max_consecutive_losses_count,
-                    "maxConsecutiveLosses": ret.max_consecutive_losses_loss,
-                    "profitTrades": ret.profit_trades,
-                    "profitTradesRate": ret.profit_trades_rate,
-                    "lossTrades": ret.loss_trades,
-                    "lossTradesRate": ret.loss_trades_rate,
-                    "avgConsecutiveWins": ret.ave_consecutive_wins,
-                    "avgConsecutiveLosses": ret.ave_consecutive_losses,
-                    "shortPositions": ret.short_positions,
-                    "shortPositionsRate": ret.short_positions_rate,
-                    "longPositions": ret.long_positions,
-                    "longPositionsRate": ret.long_positions_rate,
-                }
-                print retdata
+    colRetdata = []
+    rowRetdata = []
+    for t in retdata:
+        colRetdata.append(t)
+        rowRetdata.append(retdata[t])
 
-                r = requests.post('http://167.99.227.51/bt/register.php', data=retdata)
-                print r.status_code
-                print r.json()
+    csvfile = os.path.join(backtest.full_report_dir,"%s.csv" % backtest.ea_name)    
+    with open(csvfile, "w") as output:
+        writer = csv.writer(output, delimiter =';', lineterminator='\n')    
+        writer.writerow(colRetdata)
+        writer.writerow(rowRetdata)
+
+    csvfile2 = os.path.join(backtest.base_dir,"%s.csv" % backtest.ea_name)
+    if not os.path.exists(csvfile2):
+        with open(csvfile2, "w") as output:
+            writer = csv.writer(output, delimiter =';', lineterminator='\n')
+            writer.writerow(colRetdata)
+            writer.writerow(rowRetdata)
+    else:
+        with open(csvfile2, "a") as output:
+            writer = csv.writer(output, delimiter =';', lineterminator='\n')
+            writer.writerow(rowRetdata)
+
+    print("Report for %s in %s-%s finished." % (backtest.symbol, year, month))
+
+    if(uploadBT):
+        r = requests.post('http://167.99.227.51/bt/register.php', data=retdata)
+        #print r.status_code                    
+        try:
+            #print r.json()
+            result = r.json()
+            if(result["success"]):
+                print("Successfully uploaded to BT-Repo!")
+            else:
+                print("Upload FAILED!")            
+        except:
+            print("Upload FAILED!")
+                    
