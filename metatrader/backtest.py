@@ -12,6 +12,7 @@ import hashlib
 import shutil
 import requests
 import re
+import json
 
 from mt4 import get_mt4
 from mt4 import DEFAULT_MT4_NAME
@@ -235,7 +236,17 @@ class BackTest(object):
         """
 
         mt4 = get_mt4(alias=alias)
-        conf_file = os.path.join(mt4.appdata_path, 'config', 'tds.config')        
+        if not mt4.usedTickData:
+            return False
+
+        conf_file = os.path.join(mt4.appdata_path, 'config', 'tds.config')
+        conf = mt4.tickDataParams.copy()        
+        
+        setString = json.dumps(mt4.tickDataParams)
+        setString = setString.replace("\"","").replace(",",";").replace(":","=")
+        setString = setString.replace("{","").replace("}","").replace(" ","")
+        mt4.tickDataParamsText = setString
+        #print setString
 
         with open(conf_file, 'w') as fp:            
             fp.write('<?xml version="1.0" encoding="utf-8"?>\n')
@@ -245,24 +256,29 @@ class BackTest(object):
             fp.write('  </configSections>\n')
             fp.write('  <global>\n')
             fp.write('      <add key="UseTickDataEnabled" value="True" />\n')
-            fp.write('      <add key="Source" value="Dukascopy" />\n')
-            fp.write('      <add key="GMTOffset" value="2" />\n')
-            fp.write('      <add key="DST" value="1" />\n')
-            fp.write('      <add key="UseVariableSpread" value="True" />\n')
-            fp.write('      <add key="SlippageEnabled" value="True" />\n')
+            fp.write('      <add key="Source" value="'+mt4.sourceTick+'" />\n')
+            fp.write('      <add key="GMTOffset" value="'+conf["GMTOffset"]+'" />\n')
+            fp.write('      <add key="DST" value="'+conf["DST"]+'" />\n')
 
-            fp.write('      <add key="ReproducibleSlippage" value="True" />\n')
-            fp.write('      <add key="OptimizationSlippage" value="False" /><add key="LimitOrderSlippage" value="True" />\n')
-            fp.write('      <add key="StopOrderSlippage" value="True" /><add key="SlOrderSlippage" value="True" /><add key="TpOrderSlippage" value="True" />\n')
-            fp.write('      <add key="LatencyBasedSlippage" value="True" /><add key="MinimumSlippageDelay" value="250" /><add key="MaximumSlippageDelay" value="250" />\n')
+            fp.write('      <add key="UseVariableSpread" value="'+conf["UseVariableSpread"]+'" />\n')
+            
+            fp.write('      <add key="SlippageEnabled" value="'+conf["SlippageEnabled"]+'" />\n')
+            fp.write('      <add key="ReproducibleSlippage" value="'+conf["ReproducibleSlippage"]+'" /><add key="OptimizationSlippage" value="'+conf["OptimizationSlippage"]+'" />\n')
+            fp.write('      <add key="LimitOrderSlippage" value="'+conf["LimitOrderSlippage"]+'" /><add key="StopOrderSlippage" value="'+conf["StopOrderSlippage"]+'" />\n')
+            fp.write('      <add key="SlOrderSlippage" value="'+conf["SlOrderSlippage"]+'" /><add key="TpOrderSlippage" value="'+conf["TpOrderSlippage"]+'" />\n')
+            
+            fp.write('      <add key="LatencyBasedSlippage" value="False" />\n')
+            fp.write('      <add key="MinimumSlippageDelay" value="250" /><add key="MaximumSlippageDelay" value="250" />\n')
             fp.write('      <add key="MinimumPendingSlippageDelay" value="125" /><add key="MaximumPendingSlippageDelay" value="125" />\n')
 
-            fp.write('      <add key="DealerStyleSlippage" value="True" />\n')
-            fp.write('      <add key="MaxFavorableSlippage" value="5" /><add key="MaxUnfavorableSlippage" value="10" /><add key="UseCustomSlippageChance" value="False" />\n')
-            fp.write('      <add key="CustomSlippageChance" value="100" /><add key="UseCustomFavorableChance" value="False" /><add key="FavorableSlippageChance" value="50" />\n')
+            fp.write('      <add key="DealerStyleSlippage" value="'+conf["DealerStyleSlippage"]+'" />\n')
+            fp.write('      <add key="MaxFavorableSlippage" value="'+conf["MaxFavorableSlippage"]+'" /><add key="MaxUnfavorableSlippage" value="'+conf["MaxUnfavorableSlippage"]+'" />\n')
+            fp.write('      <add key="UseCustomSlippageChance" value="'+conf["UseCustomSlippageChance"]+'" /><add key="CustomSlippageChance" value="'+conf["CustomSlippageChance"]+'" />\n')
+            fp.write('      <add key="UseCustomFavorableChance" value="'+conf["UseCustomFavorableChance"]+'" /><add key="FavorableSlippageChance" value="'+conf["FavorableSlippageChance"]+'" />\n')
 
             fp.write('      <add key="StandardDeviationSlippage" value="False" />\n')
             fp.write('      <add key="SlippageMean" value="0" /><add key="SlippageStDev" value="30" />\n')
+
             fp.write('      <add key="OverrideMinLot" value="False" />\n')
             fp.write('      <add key="MinLot" value="0.01" />\n')
             fp.write('      <add key="OverrideMaxLot" value="False" />\n')
@@ -278,10 +294,10 @@ class BackTest(object):
             fp.write('      <add key="OverrideCommissionPer" value="False" />\n')
             fp.write('      <add key="CommissionPer" value="0" />\n')
             fp.write('      <add key="BarsToPrefix" value="100" />\n')
-            fp.write('      <add key="LiveExecutionStoploss" value="True" />\n')
-            fp.write('      <add key="LiveExecutionTakeprofit" value="True" />\n')
-            fp.write('      <add key="LiveExecutionStop" value="True" />\n')
-            fp.write('      <add key="LiveExecutionLimit" value="True" />\n')
+            fp.write('      <add key="LiveExecutionStoploss" value="'+conf["LiveExecutionStoploss"]+'" />\n')
+            fp.write('      <add key="LiveExecutionTakeprofit" value="'+conf["LiveExecutionTakeprofit"]+'" />\n')
+            fp.write('      <add key="LiveExecutionStop" value="'+conf["LiveExecutionStop"]+'" />\n')
+            fp.write('      <add key="LiveExecutionLimit" value="'+conf["LiveExecutionLimit"]+'" />\n')
             fp.write('      <add key="UseFxtDuringOptimization" value="True" /><add key="SaveFxtWhenBacktesting" value="False" />\n')
             fp.write('      <add key="SaveHstFilesWhenSavingFxt" value="False" /><add key="SaveHstFilesWhenBacktesting" value="False" />\n')
             fp.write('      <add key="ReadOnlyFxtEncountered" value="3" /><add key="DeleteFxtAfterOptimization" value="True" />\n')

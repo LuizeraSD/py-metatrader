@@ -109,6 +109,8 @@ class BacktestReport(BaseReport):
         if(self.total_trades == 0): return
         
         for index, td in enumerate(tds):
+            if td.text == 'Ticks modelled':
+                self.ticks = float(tds[index+1].text)
             if td.text == 'Initial deposit':
                 self.initial_deposit = float(tds[index+1].text)
             if td.text == 'Modelling quality':

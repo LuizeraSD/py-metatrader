@@ -1,22 +1,24 @@
-#TODO: Adicionar opcao de rodar por semana
+#TODO: Completar campos que estao faltando
 #TODO: Adicionar upload do Gif
 #TODO: Adicionar opcao de Optimization mode, ele escolhe os 5 melhores e roda 1 ano (mes a mes)
 
 from metatrader.mt4 import runBackTest
+
 import csv
 
 METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4'
 EA_NAME = 'Spartan Bolt V6\\Spartan Bolt V6.ex4'
 SET_FILE = 'C:\\Users\\Luizera\\OneDrive\\BackTests\\_SetsStore\\PPP_USDJPY5M_Desde2017_600percent.set'
 
+
 PERIOD = 'M15'
 YEAR = 2018
 MONTH = None
 DEPOSIT = 1000
-UPLOAD_BACKTEST = False
+UPLOAD_BACKTEST = True
 
 #To make weekly backtests, active this flag:
-WEEKLY = True
+WEEKLY = False
 
 #Major Symbols
 SYMBOLS = ["EURUSD"]

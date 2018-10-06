@@ -9,7 +9,8 @@ import logging
 import hashlib
 import requests
 import datetime
-
+import re
+from win32com.client import Dispatch
 
 _mt4s = {}
 
@@ -44,13 +45,55 @@ class MT4(object):
         if not has_mt4_subdirs(self.appdata_path):
             err_msg = 'appdata path %s has not sufficient dirs' % self.appdata_path
             logging.error(err_msg)
-            raise IOError(err_msg)    
+            raise IOError(err_msg) 
+        
+        ver_parser = Dispatch('Scripting.FileSystemObject')
+        try:
+            self.version = ver_parser.GetFileVersion(os.path.join(prog_path,'terminal.exe'))
+        except:    
+            self.version = 0
+    
+
+        conf_dir = os.path.join(self.appdata_path, 'config')
+        self.broker = "broker"
+        for filename in os.listdir(conf_dir):
+            matchRegex = re.match(r'^([\w ]+)\-.+\.srv', filename)
+            if (matchRegex):
+                self.broker = matchRegex.group(1)
+                break
 
         if not has_tickdata_install():
-                err_msg = 'Tick Data Not Found / Not Installed'
-                logging.error(err_msg)
-                #raise IOError(err_msg)                
-
+            self.usedTickData = False
+            self.sourceTick = self.broker
+            self.tickDataParams = {}
+            err_msg = 'Tick Data Not Found / Not Installed'
+            logging.error(err_msg)
+        else:
+            self.usedTickData = True
+            self.sourceTick = "Dukascopy"
+            self.tickDataParams = {
+                "GMTOffset":"2",
+                "DST":"1",
+                "UseVariableSpread":"True",
+                "SlippageEnabled":"True",
+                "ReproducibleSlippage":"False",
+                "OptimizationSlippage":"False",
+                "LimitOrderSlippage":"True",
+                "StopOrderSlippage":"True",
+                "SlOrderSlippage":"True",
+                "TpOrderSlippage":"True",
+                "DealerStyleSlippage":"True",
+                "MaxFavorableSlippage":"10",
+                "MaxUnfavorableSlippage":"20",
+                "UseCustomSlippageChance":"True",
+                "CustomSlippageChance":"40",
+                "UseCustomFavorableChance":"True",
+                "FavorableSlippageChance":"40",
+                "LiveExecutionStoploss":"True",
+                "LiveExecutionTakeprofit":"True",
+                "LiveExecutionStop":"True",
+                "LiveExecutionLimit":"True",
+            }
 
     def run(self, ea_name, conf=None):
         """
@@ -224,6 +267,7 @@ def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=N
     """
     initizalize(metatrade_dir)
     from metatrader.backtest import BackTest
+    
 
     if isinstance(symbols, basestring):
         symbols = [symbols]
@@ -262,23 +306,33 @@ def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=N
                 if(ret):
                     collectBackTest(backtest, ret, year, month, uploadBT)
 
+
+
 def collectBackTest(backtest, ret, year, month, uploadBT):
+    mt4 = get_mt4()
+
     if(ret.total_trades==0):
         print("Zero trades for %s in %s-%s, ignoring..." % (backtest.symbol, year, month))
         return
 
     retdata = {
-        "action": "register",
+        "action": "register",        
         "ea": backtest.ea_md5,
         "ea_name": backtest.ea_name,
         "paramsConfig": backtest.paramConfig,
-        "ano": year,
-        "mes": month,
         "symbol": backtest.symbol,
         "period": backtest.period,
-        "profit": ret.profit,
-        "deposit": backtest.deposit,
+        "ano": year,
+        "mes": month,
+        "usedTickData": 1 if mt4.usedTickData else 0,
+        "tickDataParams": str(mt4.tickDataParamsText),
+        "broker": str(mt4.broker),
+        'ticks':ret.ticks,
         "modelQuality": ret.modeling_quality_percentage,
+        "sourceTick": str(mt4.sourceTick),
+        "mtVersion": str(mt4.version),
+        "profit": ret.profit,
+        "deposit": backtest.deposit,        
         "profitFactor": ret.profit_factor,
         "payoff": ret.expected_payoff,
         "maxDrawDown": ret.max_drawdown,
@@ -312,7 +366,7 @@ def collectBackTest(backtest, ret, year, month, uploadBT):
         "longPositions": ret.long_positions,
         "longPositionsRate": ret.long_positions_rate,
     }
-    #print retdata
+    print retdata
 
     colRetdata = []
     rowRetdata = []

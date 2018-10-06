@@ -33,7 +33,7 @@ setup(name='metatrader',
       license='MIT',
       packages=['metatrader',
                 ],
-      install_requires=['beautifulsoup4,requests '],
+      install_requires=['beautifulsoup4,requests,pywin32'],
       tests_require=[
         'nose',
       ],
