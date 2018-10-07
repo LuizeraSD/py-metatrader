@@ -50,6 +50,7 @@ class BackTest(object):
         self.test_visual = test_visual        
         self.ea_md5 = ""
         self.paramConfig = ""
+        self.set_name = ""
         self.base_dir = ""
         self.relative_report_dir = ""
         self.full_report_dir = ""        
@@ -176,6 +177,7 @@ class BackTest(object):
         if(isinstance(self.param, basestring)):
             if os.path.exists(self.param):
                 shutil.copy2(self.param, param_file)
+                self.set_name = os.path.basename(self.param)
                 return        
         
 
@@ -327,14 +329,17 @@ class BackTest(object):
             "mes": self.from_date.month
         } 
         #print checkData
-
-        r = requests.post('http://167.99.227.51/bt/check.php', data=checkData)
-        result = r.json()
-        #print result
-        if "exists" in result:
-            print("Backtest already exists for %s in %s-%s, ignoring..." % (self.symbol, self.from_date.year, self.from_date.month))
-            return True
-        
+        try:
+            r = requests.post('http://167.99.227.51/bt/check.php', data=checkData)
+            result = r.json()
+            #print result
+            if "exists" in result:
+                print("Backtest already exists for %s in %s-%s, ignoring..." % (self.symbol, self.from_date.year, self.from_date.month))
+                return True
+        except:
+            print("Cannot check if the BackTest was already processed, continuing...")
+            return False
+            
         #Does not exist
         return False
 

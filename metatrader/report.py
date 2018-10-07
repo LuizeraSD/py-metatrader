@@ -95,6 +95,8 @@ class BacktestReport(BaseReport):
         
 
         self.report_file = report_file
+        if not os.path.exists(self.report_file): return
+
         with open(report_file, 'r') as fp:
             raw_html = fp.read()
             

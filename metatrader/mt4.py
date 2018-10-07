@@ -319,6 +319,7 @@ def collectBackTest(backtest, ret, year, month, uploadBT):
         "action": "register",        
         "ea": backtest.ea_md5,
         "ea_name": backtest.ea_name,
+        "set_name": backtest.set_name,
         "paramsConfig": backtest.paramConfig,
         "symbol": backtest.symbol,
         "period": backtest.period,
@@ -366,7 +367,7 @@ def collectBackTest(backtest, ret, year, month, uploadBT):
         "longPositions": ret.long_positions,
         "longPositionsRate": ret.long_positions_rate,
     }
-    print retdata
+    #print retdata
 
     colRetdata = []
     rowRetdata = []
@@ -394,9 +395,9 @@ def collectBackTest(backtest, ret, year, month, uploadBT):
     print("Report for %s in %s-%s finished." % (backtest.symbol, year, month))
 
     if(uploadBT):
-        r = requests.post('http://167.99.227.51/bt/register.php', data=retdata)
-        #print r.status_code                    
         try:
+            r = requests.post('http://167.99.227.51/bt/register.php', data=retdata)
+            #print r.status_code
             #print r.json()
             result = r.json()
             if(result["success"]):
