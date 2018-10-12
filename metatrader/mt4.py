@@ -268,43 +268,58 @@ def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=N
     initizalize(metatrade_dir)
     from metatrader.backtest import BackTest
     
+    if isinstance(set_file, basestring):
+        set_file = [set_file]
 
     if isinstance(symbols, basestring):
         symbols = [symbols]
     
-    today = datetime.date.today()
+    if isinstance(period, basestring):
+        period = [period]
+    
+    if isinstance(year, basestring):
+        year = [year]
+    
+    for mySet in set_file:
+        for myPeriod in period:
+            for myYear in year:            
+                for symbol in symbols:
+    
+                    today = datetime.date.today()
 
-    if month == None:
-        iniMonth = 1
-        maxMonth = 12        
-        if(today.year == year):
-            maxMonth = today.month
-    else:
-        iniMonth = month
-        maxMonth = month+1
+                    if month == None:
+                        iniMonth = 1
+                        maxMonth = 12        
+                        if(today.year == myYear):
+                            maxMonth = today.month
+                    else:
+                        iniMonth = month
+                        maxMonth = month+1
 
-    iniDate = datetime.date(year, iniMonth,1)
-    idx = iniDate.weekday()+1
-    sunday = iniDate - datetime.timedelta(days=idx)
-    saturday = sunday + datetime.timedelta(days=6)
-
-    for symbol in symbols:
-        if(weekly):
-            while sunday < datetime.date(year, maxMonth, 1):
-                print("Generating BackTest for %s from %s to %s..." % (symbol, sunday, saturday))
-                backtest = BackTest(ea_name, set_file, symbol, period, sunday, saturday, deposit, uploadBT)
-                ret = backtest.run()
-                if(ret):
-                    collectBackTest(backtest, ret, year, month, uploadBT)
-                sunday += datetime.timedelta(days=7)
-                saturday += datetime.timedelta(days=7)
-        else:
-            for month in range(iniMonth,maxMonth):
-                print("Generating BackTest for %s in %s-%s..." % (symbol, year, month))
-                backtest = BackTest(ea_name, set_file, symbol, period, datetime.date(year, month, 1), datetime.date(year, month+1, 1), deposit, uploadBT)
-                ret = backtest.run()
-                if(ret):
-                    collectBackTest(backtest, ret, year, month, uploadBT)
+                    iniDate = datetime.date(myYear, iniMonth,1)
+                    idx = iniDate.weekday()+1
+                    sunday = iniDate - datetime.timedelta(days=idx)
+                    saturday = sunday + datetime.timedelta(days=6)
+    
+                    try:
+                        if(weekly):
+                            while sunday < datetime.date(myYear, maxMonth, 1):
+                                print("Generating BackTest for %s from %s to %s..." % (symbol, sunday, saturday))
+                                backtest = BackTest(ea_name, mySet, symbol, myPeriod, sunday, saturday, deposit, uploadBT)
+                                ret = backtest.run()
+                                if(ret):
+                                    collectBackTest(backtest, ret, myYear, month, uploadBT)
+                                sunday += datetime.timedelta(days=7)
+                                saturday += datetime.timedelta(days=7)
+                        else:
+                            for month in range(iniMonth,maxMonth):
+                                print("Generating BackTest for %s-%s in %s-%s..." % (symbol, myPeriod, myYear, month))
+                                backtest = BackTest(ea_name, mySet, symbol, myPeriod, datetime.date(myYear, month, 1), datetime.date(myYear, month+1, 1), deposit, uploadBT)
+                                ret = backtest.run()
+                                if(ret):
+                                    collectBackTest(backtest, ret, myYear, month, uploadBT)
+                    except:
+                        print("ERROR on Backtest %s-%s in %s-%s" % (symbol, myPeriod, myYear, month))
 
 
 
@@ -312,7 +327,7 @@ def collectBackTest(backtest, ret, year, month, uploadBT):
     mt4 = get_mt4()
 
     if(ret.total_trades==0):
-        print("Zero trades for %s in %s-%s, ignoring..." % (backtest.symbol, year, month))
+        print("Zero trades for %s-%s in %s-%s (%s), ignoring..." % (backtest.symbol,backtest.period, year, month, backtest.set_name))
         return
 
     retdata = {

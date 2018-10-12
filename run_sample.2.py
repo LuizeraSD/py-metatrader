@@ -1,24 +1,20 @@
-#TODO: Adicionar upload do Gif
-#TODO: Adicionar opcao de Optimization mode, ele escolhe os 5 melhores e roda 1 ano (mes a mes)
-#TODO: Ter opcao de disparar varios terminais simultaneos
-
 from metatrader.mt4 import runBackTest
 
 import csv
 
 #METATRADER_DIR = 'C:\\Program Files (x86)\\Tickmill MT4 Client Terminal'
-METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4'
+METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4 - 1'
 
-#EA_NAME = 'saunapips\\SaunaPips.ex4'
 EA_NAME = 'Blessing3.ex4'
 
 SET_FILE = [
-"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\Teste_Conservativo_2.set"
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\default_morerisk.set",
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\noTraditional_any_ma_cci.set"
 ]
 
 PERIOD = ['H1']
-YEAR = [2015,2016,2017,2018]
 
+YEAR = [2015,2016,2017]
 MONTH = None
 DEPOSIT = 1000
 UPLOAD_BACKTEST = True
