@@ -282,9 +282,8 @@ def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=N
     
     for mySet in set_file:
         for myPeriod in period:
-            for myYear in year:            
-                for symbol in symbols:
-    
+            for symbol in symbols:
+                for myYear in year:
                     today = datetime.date.today()
 
                     if month == None:
@@ -312,12 +311,12 @@ def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=N
                                 sunday += datetime.timedelta(days=7)
                                 saturday += datetime.timedelta(days=7)
                         else:
-                            for month in range(iniMonth,maxMonth):
-                                print("Generating BackTest for %s-%s in %s-%s..." % (symbol, myPeriod, myYear, month))
-                                backtest = BackTest(ea_name, mySet, symbol, myPeriod, datetime.date(myYear, month, 1), datetime.date(myYear, month+1, 1), deposit, uploadBT)
+                            for myMonth in range(iniMonth,maxMonth):
+                                print("Generating BackTest for %s-%s in %s-%s..." % (symbol, myPeriod, myYear, myMonth))
+                                backtest = BackTest(ea_name, mySet, symbol, myPeriod, datetime.date(myYear, myMonth, 1), datetime.date(myYear, myMonth+1, 1), deposit, uploadBT)
                                 ret = backtest.run()
                                 if(ret):
-                                    collectBackTest(backtest, ret, myYear, month, uploadBT)
+                                    collectBackTest(backtest, ret, myYear, myMonth, uploadBT)
                     except:
                         print("ERROR on Backtest %s-%s in %s-%s" % (symbol, myPeriod, myYear, month))
 
