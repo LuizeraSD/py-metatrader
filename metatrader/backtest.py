@@ -13,6 +13,7 @@ import shutil
 import requests
 import re
 import json
+import base64
 
 from mt4 import get_mt4
 from mt4 import DEFAULT_MT4_NAME
@@ -53,7 +54,8 @@ class BackTest(object):
         self.set_name = ""
         self.base_dir = ""
         self.relative_report_dir = ""
-        self.full_report_dir = ""        
+        self.full_report_dir = ""
+        self.gifbase64 = ""
 
         ea_name = ea_name.replace(".ex4","")
         path, ea = os.path.split(ea_name)
@@ -343,6 +345,37 @@ class BackTest(object):
         #Does not exist
         return False
 
+    def _loadGifGraphic(self, alias=DEFAULT_MT4_NAME):
+        
+        gif_file = os.path.join(self.full_report_dir, '%s.gif' % self.ea_name)
+        if os.path.exists(gif_file):           
+
+            with open(gif_file, "rb") as image_file:
+                self.gifbase64 = base64.b64encode(image_file.read())
+
+            '''checkData = {
+                "action":"uploadgif",
+                "ea":self.ea_md5,
+                "paramsConfig": self.paramConfig,
+                "symbol": self.symbol,
+                "period": self.period,
+                "ano": self.from_date.year,
+                "mes": self.from_date.month,
+                "gif": encoded_gif
+            }
+            #print checkData
+            try:
+                r = requests.post('http://167.99.227.51/bt/uploadGif.php', data=checkData)                
+                result = r.json()
+                if "ok" in result:
+                    print("Succefully uploaded GIF for %s in %s-%s." % (self.symbol, self.from_date.year, self.from_date.month))
+                    return True
+                else:
+                    print("Failed to upload GIF for %s in %s-%s." % (self.symbol, self.from_date.year, self.from_date.month))
+            except:
+                print("Error on upload GIF for %s in %s-%s." % (self.symbol, self.from_date.year, self.from_date.month))
+                return False     '''       
+        
 
     def run(self, alias=DEFAULT_MT4_NAME):
         """
@@ -354,15 +387,16 @@ class BackTest(object):
         self.optimization = False
 
         self._prepare(alias=alias)
-        if(not self.checkIfExists()):
+        if(not self.checkIfExists()):            
             self._removeOldReport()
             bt_conf = self._get_conf_abs_path(alias=alias)
         
             mt4 = get_mt4(alias=alias)
             mt4.run(self.ea_name, conf=bt_conf)
-        
+            self._loadGifGraphic()
             ret = BacktestReport(self)
             return ret
+            
 
     def optimize(self, alias=DEFAULT_MT4_NAME):
         """

@@ -339,6 +339,7 @@ def collectBackTest(backtest, ret, year, month, uploadBT):
         "period": backtest.period,
         "ano": year,
         "mes": month,
+        "graphic": backtest.gifbase64,
         "usedTickData": 1 if mt4.usedTickData else 0,
         "tickDataParams": str(mt4.tickDataParamsText),
         "broker": str(mt4.broker),
