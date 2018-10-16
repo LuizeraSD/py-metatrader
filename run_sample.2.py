@@ -8,14 +8,15 @@ METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4 - 1'
 EA_NAME = 'Blessing3.ex4'
 
 SET_FILE = [
-"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\default_cci.set",
-"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\default.set",
-"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\no_Traditional_ma_cci"
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\GBPUSD\\Trad1_Risk75_MA1_GAF1_HedgeFix100.set",
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\GBPUSD\\Trad1_Risk75_MA1_GAF2.set",
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\GBPUSD\\Trad1_Risk75_MA1_GAF3.set",
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\GBPUSD\\Trad1_Risk75_MA1_GAF3_Hedge200.set",
 ]
 
-PERIOD = ['H1']
+PERIOD = ['M15','H1','H4']
+YEAR = [2015,2016,2017,2018]
 
-YEAR = [2015,2016,2017]
 MONTH = None
 DEPOSIT = 1000
 UPLOAD_BACKTEST = True
@@ -25,7 +26,7 @@ WEEKLY = False
 
 #Major Symbols
 
-SYMBOLS = ["EURUSD","GBPCAD","AUDCAD","GBPUSD"]
+SYMBOLS = ["GBPUSD"]
 #SYMBOLS = ["EURUSD","GBPUSD","USDJPY","USDCAD","USDCHF","AUDUSD","NZDUSD"]
 
 #If you want more symbols, just uncomment the desired line below:

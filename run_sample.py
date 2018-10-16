@@ -5,18 +5,21 @@ from metatrader.mt4 import runBackTest
 
 import csv
 
-METATRADER_DIR = 'C:\\Program Files (x86)\\Tickmill MT4 Client Terminal'
-#METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4'
+#METATRADER_DIR = 'C:\\Program Files (x86)\\Tickmill MT4 Client Terminal'
+METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4'
 
-EA_NAME = 'saunapips\\SaunaPips.ex4'
-#EA_NAME = 'Blessing3.ex4'
+#EA_NAME = 'saunapips\\SaunaPips.ex4'
+EA_NAME = 'Blessing3.ex4'
 
 SET_FILE = [
-"C:\\Users\\Luizera\\OneDrive\\BackTests\\_SetsStore\\SaunaPips\\v1.04_EURUSD_2018_OK.set"
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\GBPUSD\\Trad0_BE6_Risk75_MA1_GAF1_Hedge200.set",
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\GBPUSD\\Trad0_Risk75_MA1_GAF1_Hedge200.set",
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\GBPUSD\\Trad1_BE6_Risk75_MA1_GAF1_Hedge200.set",
+"C:\\Users\\Luizera\\OneDrive\\BackTests\\Blessing\\GBPUSD\\Trad1_Risk75_MA1_GAF1_Hedge200.set",
 ]
 
-PERIOD = ['M1']
-YEAR = [2016]
+PERIOD = ['M15','H1','H4']
+YEAR = [2015,2016,2017,2018]
 
 MONTH = None
 DEPOSIT = 1000
@@ -27,8 +30,8 @@ WEEKLY = False
 
 #Major Symbols
 
-SYMBOLS = ["EURUSD"]
-#SYMBOLS = ["GBPAUD","EURUSD","GBPUSD","USDJPY","USDCAD","USDCHF","AUDUSD","NZDUSD"]
+SYMBOLS = ["GBPUSD"]
+#SYMBOLS = ["EURUSD","GBPUSD","USDJPY","USDCAD","USDCHF","AUDUSD","NZDUSD"]
 
 #If you want more symbols, just uncomment the desired line below:
 #SYMBOLS.extend(["EURJPY","EURGBP","EURCHF","EURCAD","EURAUD","EURNZD"]) #EUR Crosses 

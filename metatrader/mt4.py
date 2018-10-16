@@ -288,7 +288,7 @@ def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=N
 
                     if month == None:
                         iniMonth = 1
-                        maxMonth = 12        
+                        maxMonth = 13
                         if(today.year == myYear):
                             maxMonth = today.month
                     else:
@@ -300,7 +300,7 @@ def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=N
                     sunday = iniDate - datetime.timedelta(days=idx)
                     saturday = sunday + datetime.timedelta(days=6)
     
-                    try:
+                    try:                        
                         if(weekly):
                             while sunday < datetime.date(myYear, maxMonth, 1):
                                 print("Generating BackTest for %s from %s to %s..." % (symbol, sunday, saturday))
@@ -312,8 +312,14 @@ def runBackTest(metatrade_dir, ea_name, set_file, symbols, period, year, month=N
                                 saturday += datetime.timedelta(days=7)
                         else:
                             for myMonth in range(iniMonth,maxMonth):
+                                endYear=myYear
+                                endMonth=myMonth+1
+                                if(myMonth==12):
+                                    endYear=endYear+1
+                                    endMonth=1
+                                
                                 print("Generating BackTest for %s-%s in %s-%s..." % (symbol, myPeriod, myYear, myMonth))
-                                backtest = BackTest(ea_name, mySet, symbol, myPeriod, datetime.date(myYear, myMonth, 1), datetime.date(myYear, myMonth+1, 1), deposit, uploadBT)
+                                backtest = BackTest(ea_name, mySet, symbol, myPeriod, datetime.date(myYear, myMonth, 1), datetime.date(endYear, endMonth, 1), deposit, uploadBT)
                                 ret = backtest.run()
                                 if(ret):
                                     collectBackTest(backtest, ret, myYear, myMonth, uploadBT)
