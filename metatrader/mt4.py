@@ -10,6 +10,7 @@ import hashlib
 import requests
 import datetime
 import re
+import time
 from win32com.client import Dispatch
 
 _mt4s = {}
@@ -86,7 +87,7 @@ class MT4(object):
                 "MaxFavorableSlippage":"10",
                 "MaxUnfavorableSlippage":"20",
                 "UseCustomSlippageChance":"True",
-                "CustomSlippageChance":"40",
+                "CustomSlippageChance":"60",
                 "UseCustomFavorableChance":"True",
                 "FavorableSlippageChance":"40",
                 "LiveExecutionStoploss":"True",
@@ -416,15 +417,30 @@ def collectBackTest(backtest, ret, year, month, uploadBT):
     print("Report for %s in %s-%s finished." % (backtest.symbol, year, month))
 
     if(uploadBT):
+        #print retdata        
         try:
-            r = requests.post('http://167.99.227.51/bt/register.php', data=retdata)
-            #print r.status_code
-            #print r.json()
-            result = r.json()
-            if(result["success"]):
-                print("Successfully uploaded to BT-Repo!")
-            else:
-                print("Upload FAILED!")            
+            print("Uploading backtest to Server...")
+            uploadBackTest(retdata)
         except:
-            print("Upload FAILED!")
-                    
+            try:
+                print("Failed, retry again in 5 seconds...")
+                time.sleep(5)
+                uploadBackTest(retdata)
+            except:
+                print("Failed, will do a last attempt in 5 seconds...")
+                time.sleep(5)
+                try:
+                    uploadBackTest(retdata)
+                except:
+                    print("Failed. Cannot upload, continuing...")
+
+def uploadBackTest(retdata):
+    r = requests.post('http://167.99.227.51/bt/register.php', data=retdata)        
+    result = r.json()
+    if(result["success"]):
+        print("Successfully uploaded to BT-Repo!")
+        return True
+    else:
+        print("Upload FAILED! Returned a error from the server")
+        print r.json()
+        return False

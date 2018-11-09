@@ -5,8 +5,8 @@ from metatrader.mt4 import runBackTest
 
 import csv
 
-METATRADER_DIR = 'C:\\Program Files (x86)\\Tickmill MT4 Client Terminal - 1'
-#METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4 - 1'
+METATRADER_DIR = 'C:\\Program Files (x86)\\Tickmill MT4 Client Terminal - 3'
+#METATRADER_DIR = 'C:\\Program Files (x86)\\XM Global MT4 - 3'
 
 EA_NAME = 'Expert_Sniper.ex4'
 
@@ -16,7 +16,7 @@ SET_FILE = [
 ]
 
 PERIOD = ['H1']
-YEAR = [2010,2011,2012]
+YEAR = [2016,2017,2018]
 
 MONTH = None
 DEPOSIT = 1000
